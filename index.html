@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Renee Pong</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    overflow:hidden;
+}
+
+canvas{
+    background:black;
+    border:3px solid white;
+}
+</style>
+
+</head>
+<body>
+
+<canvas id="game" width="900" height="500"></canvas>
+
+<script>
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const ballImg=new Image();
+ballImg.src="ball.png";
+
+const p1Img=new Image();
+p1Img.src="paddle1.png";
+
+const p2Img=new Image();
+p2Img.src="paddle2.png";
+
+const paddleWidth=32;
+const paddleHeight=96;
+
+const ball={
+    x:canvas.width/2,
+    y:canvas.height/2,
+    w:32,
+    h:32,
+    vx:5*(Math.random()<0.5?-1:1),
+    vy:3
+};
+
+const left={
+    x:20,
+    y:canvas.height/2-paddleHeight/2,
+    score:0
+};
+
+const right={
+    x:canvas.width-20-paddleWidth,
+    y:canvas.height/2-paddleHeight/2,
+    score:0
+};
+
+const keys={};
+
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function resetBall(){
+
+    ball.x=canvas.width/2-ball.w/2;
+    ball.y=canvas.height/2-ball.h/2;
+
+    ball.vx=5*(Math.random()<0.5?-1:1);
+    ball.vy=(Math.random()*6)-3;
+
+}
+
+function update(){
+
+    // Player movement
+
+    if(keys["w"]||keys["W"])
+        left.y-=6;
+
+    if(keys["s"]||keys["S"])
+        left.y+=6;
+
+    if(keys["ArrowUp"])
+        right.y-=6;
+
+    if(keys["ArrowDown"])
+        right.y+=6;
+
+    left.y=Math.max(0,Math.min(canvas.height-paddleHeight,left.y));
+    right.y=Math.max(0,Math.min(canvas.height-paddleHeight,right.y));
+
+    // Ball movement
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    if(ball.y<=0||ball.y+ball.h>=canvas.height)
+        ball.vy*=-1;
+
+    // Left paddle collision
+
+    if(ball.x<left.x+paddleWidth &&
+       ball.x+ball.w>left.x &&
+       ball.y<left.y+paddleHeight &&
+       ball.y+ball.h>left.y){
+
+        ball.x=left.x+paddleWidth;
+        ball.vx=Math.abs(ball.vx);
+
+        let hit=(ball.y+ball.h/2)-(left.y+paddleHeight/2);
+        ball.vy=hit*0.12;
+    }
+
+    // Right paddle collision
+
+    if(ball.x+ball.w>right.x &&
+       ball.x<right.x+paddleWidth &&
+       ball.y<right.y+paddleHeight &&
+       ball.y+ball.h>right.y){
+
+        ball.x=right.x-ball.w;
+        ball.vx=-Math.abs(ball.vx);
+
+        let hit=(ball.y+ball.h/2)-(right.y+paddleHeight/2);
+        ball.vy=hit*0.12;
+    }
+
+    // Score
+
+    if(ball.x<0){
+        right.score++;
+        resetBall();
+    }
+
+    if(ball.x>canvas.width){
+        left.score++;
+        resetBall();
+    }
+
+}
+
+function draw(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Center line
+
+    ctx.strokeStyle="#555";
+    ctx.setLineDash([10,10]);
+
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2,0);
+    ctx.lineTo(canvas.width/2,canvas.height);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    // Draw sprites
+
+    ctx.drawImage(
+        p1Img,
+        left.x,
+        left.y,
+        paddleWidth,
+        paddleHeight
+    );
+
+    ctx.drawImage(
+        p2Img,
+        right.x,
+        right.y,
+        paddleWidth,
+        paddleHeight
+    );
+
+    ctx.drawImage(
+        ballImg,
+        ball.x,
+        ball.y,
+        ball.w,
+        ball.h
+    );
+
+    // Scores
+
+    ctx.fillStyle="white";
+    ctx.font="40px Arial";
+
+    ctx.fillText(left.score,canvas.width/4,50);
+    ctx.fillText(right.score,canvas.width*3/4,50);
+
+}
+
+function gameLoop(){
+
+    update();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
