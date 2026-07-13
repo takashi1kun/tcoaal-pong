@@ -49,7 +49,9 @@ const ball={
     w:47,
     h:55,
     vx:5*(Math.random()<0.5?-1:1),
-    vy:3
+    vy:3,
+    angle:0,
+    angularVelocity:0
 };
 
 const left={
@@ -106,8 +108,18 @@ function resetBall(){
     ball.x=canvas.width/2-ball.w/2;
     ball.y=canvas.height/2-ball.h/2;
 
-    ball.vx=5*(Math.random()<0.5?-1:1);
-    ball.vy=(Math.random()*6)-3;
+    ball.vx=2*(Math.random()<0.5?-1:1);
+    ball.vy=(Math.random()*2)-3;
+    const speed=Math.hypot(ball.vx,ball.vy);
+
+const MAX_SPEED=5;
+
+if(speed>MAX_SPEED){
+
+    ball.vx*=MAX_SPEED/speed;
+    ball.vy*=MAX_SPEED/speed;
+
+}
 
 }
 function spawnPaint(){
@@ -270,6 +282,7 @@ function update(){
 
         let hit=(ball.y+ball.h/2)-(left.y+paddleHeight/2);
         ball.vy=hit*0.12;
+        ball.angularVelocity += hit * 0.004;
     }
 
     // Right paddle collision
@@ -284,10 +297,11 @@ function update(){
 
         let hit=(ball.y+ball.h/2)-(right.y+paddleHeight/2);
         ball.vy=hit*0.12;
+        ball.angularVelocity += hit * 0.004;
     }
 
     // Score
-
+    ball.angle += ball.angularVelocity;
     if(ball.x<0){
         right.score++;
         resetBall();
@@ -334,13 +348,24 @@ function draw(){
         paddleHeight
     );
 
-    ctx.drawImage(
-        ballImg,
-        ball.x,
-        ball.y,
-        ball.w,
-        ball.h
-    );
+    ctx.save();
+
+ctx.translate(
+    ball.x + ball.w/2,
+    ball.y + ball.h/2
+);
+
+ctx.rotate(ball.angle);
+
+ctx.drawImage(
+    ballImg,
+    -ball.w/2,
+    -ball.h/2,
+    ball.w,
+    ball.h
+);
+
+ctx.restore();
 
     // Scores
 
@@ -359,7 +384,19 @@ updatePaint();
 draw();
 
     requestAnimationFrame(gameLoop);
+    ball.angularVelocity *= 0.985;
+    ball.vx *= 0.998;
+ball.vy *= 0.998;
+const MIN_SPEED = 2.8;
 
+const speed = Math.hypot(ball.vx, ball.vy);
+
+if(speed < MIN_SPEED){
+
+    ball.vx *= MIN_SPEED/speed;
+    ball.vy *= MIN_SPEED/speed;
+
+}
 }
 
 gameLoop();
